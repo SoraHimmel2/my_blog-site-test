@@ -74,26 +74,6 @@ foreach ($scoreTable as $tableCols => $col) {
 
     echo ('<br/>');
 }
-//for ($i = 0; $i < count($scoreTable); $i++) {
-//    if ($i == 6) {
-//        foreach ($mods as $mod => $text) {
-//            echo ($text->getText() . $text->getAttribute('title') . $text->getAttribute('data-orig-title') . '<br/>');
-//
-//        }
-//    } elseif ($i == 3) {
-//        foreach ($maxCombo as $combo => $text) {
-//            if ($text->getAttribute('class') == 'beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--perfect') {
-//                print_r($text->getText() . " perfectCombo " . "<br/>");
-//            } else {
-//                print_r($text->getText() . '<br/>');
-//            }
-//        }
-//    } else {
-//        foreach ($scoreTable[$i] as $data => $text) {
-//            print_r($text->getText() . '<br/>');
-//        }
-//    }
-//    echo '<br/>';
-//  }
+
 
 $driver->quit();
