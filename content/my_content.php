@@ -4,23 +4,23 @@
 
 
   <?php
-  $conn = mysqli_connect('localhost','SoraHimmel','1234567890','test_database');
+$conn = mysqli_connect('localhost', 'SoraHimmel', '1234567890', 'test_database');
 
-  if(!$conn){
-  	 echo 'Connection eror: ' . mysqli_connect_error();
-   }
-  $sql = 'SELECT title,id, description FROM novels ORDER BY id';
-  $result = mysqli_query($conn,$sql);
-  $novels = mysqli_fetch_all($result, MYSQLI_ASSOC);
-  mysqli_free_result($result);
-  mysqli_close($conn);
+if (!$conn) {
+    echo 'Connection eror: ' . mysqli_connect_error();
+}
+$sql = 'SELECT title,id, description FROM novels ORDER BY id';
+$result = mysqli_query($conn, $sql);
+$novels = mysqli_fetch_all($result, MYSQLI_ASSOC);
+mysqli_free_result($result);
+mysqli_close($conn);
 
-  ?>
+?>
 
 
 
-<?php if(isset($novels) && is_array($novels))
-foreach($novels as $novel) {  ?>
+<?php if (isset($novels) && is_array($novels)) {
+    foreach ($novels as $novel) {?>
 
 
 
@@ -42,7 +42,9 @@ foreach($novels as $novel) {  ?>
       </div>
          </div>
 
-<?php } ?>
+<?php }
+}
+?>
 
 </div>
 </div>

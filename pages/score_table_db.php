@@ -1,41 +1,42 @@
 <?php
 
-require __DIR__ . 'vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 
 
 class ScoreTable
 {
-    const DB_HOST = 'localhost';
-    const DB_NAME = 'OsuScoreTable';
-    const DB_USER = 'root';
-    const DB_PASSWORD = 'sanctum';
-
-    private $pdo = null;
-    private $tableName = 'temporary_score_table';
+    private $databaseConfig = [
+        'host' => 'localhost',
+        'user' => 'root',
+        'pass' => 'sanctum',
+        'db'   => 'OsuScoreTable',
+        'port' => NULL,
+        'socket' => NULL,
+        'pconnect' => FALSE,
+        'charset' => 'utf8',
+        'errmode' => 'exception',
+        'exception' => 'Exception'
+        ];
     
+
+    private $database = null;
+    private $tableName = 'temporary_score_table';
+
     public function __construct()
     {
-        $conStr = sprintf("mysql:host=%s; dbname=%s", self::DB_HOST, self::DB_NAME);
-        try {
-            $this->pdo = new PDO($conStr, self::DB_USER, self::DB_PASSWORD);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-            $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
-        } catch (PDOException $e) {
-            echo ($e->getMessage());
-        }
+        $this->database = new SafeMySQL($this->databaseConfig);
         $this->createScoreTable();
 
     }
 
     public function __destruct()
     {
-        $this->pdo = null;
+        $this->database = null;
     }
     private function createScoreTable()
     {
        
-        $sql = "CREATE TEMPORARY TABLE IF NOT EXISTS  `$this->tableName`
+        $sql = "CREATE TEMPORARY TABLE IF NOT EXISTS  ?n
                 (
                     place VARCHAR(4),
                     score   VARCHAR(30),
@@ -45,26 +46,22 @@ class ScoreTable
                     time  VARCHAR(30),
                     mods VARCHAR(30)
                 );";
-        $query = $this->pdo->prepare($sql);
-        $query->execute();
+        $this->database->query($sql,$this->tableName);
     }
     public function insertRow($column, $columnValue)
     {
 
-        $sql = "INSERT INTO `$this->tableName`  (`$column`) VALUES (:columnValue);";
-        $query = $this->pdo->prepare($sql);
-
-        $query->execute(['columnValue' => $columnValue]);
+        $sql = "INSERT INTO ?n  (?n) VALUES (?s);";
+        $this->database->query($sql,$this->tableName,$column,$columnValue);
 
     }
     public function showData()
     {
         $sql = 'SELECT *
-                FROM `$this->tableName`;';
-        $result = $this->pdo->prepare($sql);
-        $result->execute();
-
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                FROM ?n;';
+    
+        $rows = $this->database->getAll($sql,$this->tableName);
+        foreach($rows as $row) {
 
             print_r($row['pp'] . '<br/>');
 

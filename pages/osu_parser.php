@@ -1,36 +1,45 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
-$webdriver_path = $_SERVER['DOCUMENT_ROOT'] . '/vendor/php-webdriver/webdriver/lib/';
+
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 
-$chromeOptions = new ChromeOptions();
-$chromeOptions->addArguments(['--headless']);
+class Parser
+{
+    private $scoreTable = [];
+    private $driver;
 
-$capabilities = DesiredCapabilities::chrome();
-$capabilities->setCapability(ChromeOptions::CAPABILITY_W3C, $chromeOptions);
+    public function __construct($mapUrl)
+    {
+        $chromeOptions = new ChromeOptions();
+        $chromeOptions->addArguments(['--headless']);
 
-$serverUrl = 'http://localhost:4444/wd/hub';
+        $capabilities = DesiredCapabilities::chrome();
+        $capabilities->setCapability(ChromeOptions::CAPABILITY_W3C, $chromeOptions);
 
-$driver = RemoteWebDriver::create($serverUrl, $capabilities);
+        $serverUrl = 'http://localhost:4444/wd/hub';
 
-//$driver->get('https://www.w3schools.com/html/html_tables.asp');
-$driver->get('https://osu.ppy.sh/beatmapsets/1313256#osu/2721646');
+        $this->$driver = RemoteWebDriver::create($serverUrl, $capabilities);
 
-$listOfScore = $driver->wait(10)->until(
-    WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(WebDriverBy::xpath('//a[@class = "beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--score"  ]'))
-);
+        $this->$driver->get($mapUrl);
+    }
 
-$listOfAccuracy = $driver->findElements(WebDriverBy::xpath('//descendant::td[@class="beatmap-scoreboard-table__cell"][4]'));
-$listOfPlayerName = $driver->findElements(WebDriverBy::xpath('
+    public function getTableData()
+    {
+        $listOfScore = $this->$driver->wait(10)->until(
+            WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(WebDriverBy::xpath('//a[@class = "beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--score"  ]'))
+        );
+
+        $listOfAccuracy = $this->$driver->findElements(WebDriverBy::xpath('//descendant::td[@class="beatmap-scoreboard-table__cell"][4]'));
+        $listOfPlayerName = $this->$driver->findElements(WebDriverBy::xpath('
        //a[@class="beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--user-link js-usercard"]'));
-$listOfMaxCombo = $driver->findElements(WebDriverBy::xpath('//child::td[7]/a'));
-$listOfPp = $driver->findElements(WebDriverBy::xpath('//td/a/span'));
-$listOfTime = $driver->findElements(WebDriverBy::xpath('//td/a/time[@class="js-tooltip-time"]'));
-$listOfMods = $driver->findElements(WebDriverBy::xpath('
+        $listOfMaxCombo = $this->$driver->findElements(WebDriverBy::xpath('//child::td[7]/a'));
+        $listOfPp = $this->$driver->findElements(WebDriverBy::xpath('//td/a/span'));
+        $listOfTime = $this->$driver->findElements(WebDriverBy::xpath('//td/a/time[@class="js-tooltip-time"]'));
+        $listOfMods = $this->$driver->findElements(WebDriverBy::xpath('
        //td/a/div/div[@class="mod mod--HD"] |
        //td/a/div/div[@class="mod mod--HR"] |
        //td/a/div/div[@class="mod mod--DT"] |
@@ -40,40 +49,56 @@ $listOfMods = $driver->findElements(WebDriverBy::xpath('
        //td/a/div/div[@class="mod mod--HT"] |
        //a[@class="beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--rank"]'));
 
-$scoreTable = [
-    'score' => $listOfScore,
-    'accuracy' => $listOfAccuracy,
-    'playerName' => $listOfPlayerName,
-    'maxCombo' => $listOfMaxCombo,
-    'pp' => $listOfPp,
-    'time' => $listOfTime,
-    'mods' => $listOfMods];
-
-foreach ($scoreTable as $tableCols => $col) {
-    if ($tableCols == 'mods') {
-        foreach ($col as $rowList => $rowData) {
-
-            echo ($rowData->getText() . $rowData->getAttribute('title') . $rowData->getAttribute('data-orig-title') . '<br/>');
-
-        }
-    } elseif ($tableCols == 'maxCombo') {
-        foreach ($col as $rowList => $rowData) {
-            if ($rowData->getAttribute('class') == 'beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--perfect') {
-                print_r($rowData->getText() . " perfectCombo " . "<br/>");
-            } else {
-                print_r($rowData->getText() . '<br/>');
-            }
-
-        }
-    } else {
-        foreach ($col as $rowList => $rowData) {
-            echo ($rowData->getText() . '<br/>');
-        }
-
+        $this->$scoreTable = [
+            'score' => $listOfScore,
+            'accuracy' => $listOfAccuracy,
+            'playerName' => $listOfPlayerName,
+            'maxCombo' => $listOfMaxCombo,
+            'pp' => $listOfPp,
+            'time' => $listOfTime,
+            'mods' => $listOfMods,
+        ];
     }
 
-    echo ('<br/>');
+    public function sendDataToDatabase()
+    {
+        foreach ($this->$scoreTable as $tableCols => $col) {
+            if ($tableCols == 'mods') {
+                foreach ($col as $rowList => $rowData) {
+
+                    echo ($rowData->getText() . $rowData->getAttribute('title') . $rowData->getAttribute('data-orig-title') . '<br/>');
+
+                }
+            } elseif ($tableCols == 'maxCombo') {
+                foreach ($col as $rowList => $rowData) {
+                    if ($rowData->getAttribute('class') == 'beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--perfect') {
+                        print_r($rowData->getText() . " perfectCombo " . "<br/>");
+                    } else {
+                        print_r($rowData->getText() . '<br/>');
+                    }
+
+                }
+            } else {
+                foreach ($col as $rowList => $rowData) {
+                    echo ($rowData->getText() . '<br/>');
+                }
+
+            }
+
+            echo ('<br/>');
+        }
+
+        $this->$driver->quit();
+    }
+
 }
+//$osuParser = new Parser('https://osu.ppy.sh/beatmapsets/1313256#osu/2721646');
+//$osuParser->getTableData();
+//$osuParser->sendDataToDatabase();
 
+include_once 'score_table_db.php';
+$testDb = new ScoreTable();
+$testDb->insertRow('pp','832');
+$testDb->insertRow('pp','988');
+$testDb->showData();
 
-$driver->quit();

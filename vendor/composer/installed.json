@@ -1,6 +1,54 @@
 {
     "packages": [
         {
+            "name": "colshrapnel/safemysql",
+            "version": "v1.1.0",
+            "version_normalized": "1.1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/colshrapnel/safemysql.git",
+                "reference": "e1cbace64e6a6db02b5962a39990d26107d1d437"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/colshrapnel/safemysql/zipball/e1cbace64e6a6db02b5962a39990d26107d1d437",
+                "reference": "e1cbace64e6a6db02b5962a39990d26107d1d437",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.0.0"
+            },
+            "time": "2018-05-16T10:40:18+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "safemysql.class.php"
+                ]
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Colonel Shrapnel",
+                    "email": "col.shrapnel@gmail.com",
+                    "role": "lead"
+                }
+            ],
+            "description": "A real safe and convenient way to handle MySQL queries.",
+            "homepage": "https://github.com/colshrapnel/safemysql",
+            "keywords": [
+                "db",
+                "mysql"
+            ],
+            "support": {
+                "issues": "https://github.com/colshrapnel/safemysql/issues",
+                "source": "https://github.com/colshrapnel/safemysql/tree/v1.1.0"
+            },
+            "install-path": "../colshrapnel/safemysql"
+        },
+        {
             "name": "php-webdriver/webdriver",
             "version": "1.11.1",
             "version_normalized": "1.11.1.0",
