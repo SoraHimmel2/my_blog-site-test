@@ -10,9 +10,70 @@ include 'top_score_database.php';
 
 class Parser
 {
-    private $beatmapScoreboardTable = [];
+    private $scoreboardTable = [];
     private $driver;
-    private $osuScoreDatabase;
+
+    private function insertDataToArray(array $list)
+    {
+        $result = [];
+        foreach ($list as $data) {
+            $result[] = $data->getText();
+        }
+        return $result;
+    }
+    private function insertMaxComboToArray(array $maxCombo)
+    {
+        $result = [];
+        foreach ($maxCombo as $data) {
+            if ($data->getAttribute('class') == 'beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--perfect') {
+                $result[] = $data->getText() . ' ' . 'perfectCombo';
+            } else {
+                $result[] = $data->getText();
+            }
+        }
+        return $result;
+    }
+    private function insertPlaceOrModsToArray($type, array $placeAndListOfMods)
+    {
+
+        $mods = [];
+        $place = [];
+
+        for ($counter = 0; $counter < sizeof($placeAndListOfMods); $counter++) {
+
+            if (!isset($placeAndListOfMods[$counter])) {
+
+                break;
+            }
+            if (ctype_digit($placeAndListOfMods[$counter]->getText()[1])) {
+
+                $place[] = $placeAndListOfMods[$counter]->getText();
+            }
+
+            if (!ctype_digit($placeAndListOfMods[$counter]->getText()[1]) || empty($placeAndListOfMods[$counter]->getAttribute('title') . $placeAndListOfMods[$counter]->getAttribute('data-orig-title'))) {
+                if (!isset($placeAndListOfMods[$counter + 1])) {
+                    $isReady = true;
+                } else if (ctype_digit($placeAndListOfMods[$counter + 1]->getText()[1])) {
+                    $isReady = true;
+                }
+
+                $modResult .= $placeAndListOfMods[$counter]->getAttribute('title') . $placeAndListOfMods[$counter]->getAttribute('data-orig-title') . " ";
+
+            }
+            if ($isReady) {
+
+                $mods[] = $modResult;
+                $modResult = " ";
+                $isReady = false;
+
+            }
+        }
+        if ($type == "place") {
+            return $place;
+        } else {
+            return $mods;
+        }
+    }
 
     public function __construct($mapUrl)
     {
@@ -28,7 +89,6 @@ class Parser
 
         $this->$driver->get($mapUrl);
     }
-
     public function getTableData()
     {
         $listOfScore = $this->$driver->wait(8)->until(
@@ -51,97 +111,28 @@ class Parser
        //td/a/div/div[@class="mod mod--HT"] |
        //a[@class="beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--rank"]'));
 
-        //$this->$scoreTable = [
-        //    'score' => $listOfScore,
-        //    'accuracy' => $listOfAccuracy,
-        //    'player_name' => $listOfPlayerName,
-        //    'max_combo' => $listOfMaxCombo,
-        //    'pp' => $listOfPp,
-        //    'time' => $listOfTime,
-        //    'mods' => $listOfMods,
-        //];
+        $this->scoreTable['place'] = $this->insertPlaceOrModsToArray('place', $placeAndListOfMods);
+        $this->scoreTable['score'] = $this->insertDataToArray($listOfScore);
+        $this->scoreTable['accuracy'] = $this->insertDataToArray($listOfAccuracy);
+        $this->scoreTable['player_name'] = $this->insertDataToArray($listOfPlayerName);
+        $this->scoreTable['max_combo'] = $this->insertMaxComboToArray($listOfMaxCombo);
+        $this->scoreTable['pp'] = $this->insertDataToArray($listOfPp);
+        $this->scoreTable['time'] = $this->insertDataToArray($listOfTime);
+        $this->scoreTable['mods'] = $this->insertPlaceOrModsToArray('mods', $placeAndListOfMods);
 
-        /*foreach ($this->$scoreTable as $tableCols => $col) {
-
-        if ($tableCols == 'mods') {
-        foreach ($col as $rowData) {
-
-        //echo ($rowData->getText() . $rowData->getAttribute('title') . $rowData->getAttribute('data-orig-title') . '<br/>');
-        $sliceOfData['place'] = $rowData->getText();
-        $sliceOfData[$tableCols] = $rowData->getAttribute('title') . $rowData->getAttribute('data-orig-title');
-        //$this->osuScoreDatabase->insertRow('place', $rowData->getText());
-        //$this->osuScoreDatabase->insertRow('mods', $rowData->getAttribute('title') . $rowData->getAttribute('data-orig-title'));
-
-        }
-        } elseif ($tableCols == 'maxCombo') {
-        foreach ($col as $rowData) {
-        if ($rowData->getAttribute('class') == 'beatmap-scoreboard-table__cell-content beatmap-scoreboard-table__cell-content--perfect') {
-        //print_r($rowData->getText() . " perfectCombo " . "<br/>");
-        $sliceOfData[$tableCols] =  $rowData->getText() . 'perfectCombo';
-        } else {
-        $sliceOfData [$tableCols] =  $rowData->getText();
-        }
-
-        }
-        } else {
-        foreach ($col as $rowData) {
-        //echo ($rowData->getText() . '<br/>');
-
-        }
-
-        }
-
-        echo ('<br/>');
-        }*/
-        $mods = [];
-        $results = [];
-        $currentState = [];
-        foreach ($placeAndListOfMods as $data) {
-            // print_r($data->getText() . '<br/>');
-            // print_r($data->getAttribute('title') . $data->getAttribute('data-orig-title') . '<br/>');
-
-        }
-        for ($counter = 0; $counter < sizeof($placeAndListOfMods); $counter++) {
-
-            if (!isset($placeAndListOfMods[$counter])) {
-                $currentState[] = $placeAndListOfMods[$counter]->getAttribute('title') . $placeAndListOfMods[$counter]->getAttribute('data-orig-title') .
-                $placeAndListOfMods[$counter]->getText();
-                break;
-            }
-            if (ctype_digit($placeAndListOfMods[$counter]->getText()[1])) {
-                $currentState[] = $placeAndListOfMods[$counter]->getAttribute('title') . $placeAndListOfMods[$counter]->getAttribute('data-orig-title') .
-                $placeAndListOfMods[$counter]->getText();
-                $results[] = $placeAndListOfMods[$counter]->getText();
-            }
-            if (!ctype_digit($placeAndListOfMods[$counter]->getText()[1])) {
-                if (!isset($placeAndListOfMods[$counter + 1])) {
-                    $isReady = true;
-                } else if (ctype_digit($placeAndListOfMods[$counter + 1]->getText()[1])) {
-                    $isReady = true;
-                }
-                $modResult .= $placeAndListOfMods[$counter]->getAttribute('title') . $placeAndListOfMods[$counter]->getAttribute('data-orig-title');
-                $currentState[] = $placeAndListOfMods[$counter]->getAttribute('title') .
-                $placeAndListOfMods[$counter]->getAttribute('data-orig-title') .
-                $placeAndListOfMods[$counter]->getText();
-
-            }
-            if ($isReady) {
-                $mods[] = $modResult;
-                $modResult = " ";
-                $isReady = false;
-            }
-        }
-
-        print_r($mods);
-        echo "<br/>";
-        print_r($results);
-
+        print_r($this->scoreTable);
     }
+
+    public function getScoreTable()
+    {
+        return $this->scoreTable;
+    }
+    
     public function __destruct()
     {
         $this->$driver->quit();
     }
 
 }
-$osuParser = new Parser('https://osu.ppy.sh/beatmapsets/441668#osu/949948');
+$osuParser = new Parser('https://osu.ppy.sh/beatmapsets/1530166#osu/3129871');
 $osuParser->getTableData();
